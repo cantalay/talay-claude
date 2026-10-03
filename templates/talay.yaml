@@ -1,6 +1,6 @@
 # talay.yaml — Talay deploy manifestosu (app reposunun kökünde, secret DEĞERİ içermez)
 # talay-ship bu dosyayı okuyarak provisioning ve deploy yapar.
-project: example            # DNS-1123; realm, Vault path ve namespace öneki
+project: example            # küçük harf/rakam, tire YOK (realm ve gateway env anahtarı); Vault path ve namespace öneki
 displayName: Example
 environment: prod
 
@@ -9,7 +9,8 @@ auth:                       # Keycloak realm'i: https://auth.cantalay.com/realms
   selfRegistration: true
   defaultRole: user
   roles: [user, admin]
-  browserClients:           # PUBLIC + PKCE; client id = <project>-<key>
+  gateway: true             # login/kayıt uygulamanın kendi formundan auth-gateway /auth/<project>/* ile (Keycloak sayfası yok)
+  browserClients:           # PUBLIC + PKCE yedek client; client id = <project>-<key>
     web: https://example.cantalay.com
     # admin: https://admin.example.cantalay.com
   apiClient: true           # BEARER-ONLY <project>-api, browser token audience'ına eklenir
@@ -57,7 +58,6 @@ components:
       API_URL: https://api.example.cantalay.com
       AUTH_URL: https://auth.cantalay.com
       AUTH_REALM: example
-      AUTH_CLIENT_ID: example-web
 
 observability:
   samplingRatio: "0.25"

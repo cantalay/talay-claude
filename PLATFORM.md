@@ -3,7 +3,7 @@
 Bu dosya talay platformunun **tek doğruluk kaynağıdır**. Her `talay-*` skill'i buna göre çalışır.
 Burada yazan bir değer ile canlı cluster çelişirse canlı durumu esas al, sonra bu dosyayı güncelle.
 
-Son doğrulama: 2026-10-03 (canlı cluster + repolar).
+Son doğrulama: 2026-10-03 (canlı cluster + repolar; auth-gateway çok-realm geçişi sonrası).
 
 ## 1. Topoloji
 
@@ -11,7 +11,7 @@ Son doğrulama: 2026-10-03 (canlı cluster + repolar).
 | --- | --- |
 | Sunucu | `srv468915`, public IP `45.87.80.10`, Ubuntu 24.04, tek node |
 | Kubernetes | K3s `v1.36.4+k3s1`, K3s'in kendi Traefik'i kapalı |
-| Kapasite | ~2 vCPU, 7.8Gi RAM, swap yok. 2026-10-03'te RAM ~%75 dolu → **her yeni workload'dan önce kapasite kontrolü** |
+| Kapasite | 2 vCPU, 7.8Gi RAM, swap yok. 2026-10-03: CPU request %54, RAM kullanım ~%75 → **her yeni workload'dan önce kapasite kontrolü** |
 | Erişim | `ssh root@45.87.80.10` (SSH key ile). Lokal `~/.kube/config` **eski cluster'a ait, kullanma** |
 | Storage | `local-path` (tek disk; PVC'ler sunucu kaybına karşı dayanıklı değil) |
 
@@ -136,16 +136,27 @@ Uygulamaya giden env sözleşmesi (Vault `apps/<project>/<component>`):
 `SPRING_DATASOURCE_URL` (jdbc:postgresql://…), `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`,
 opsiyonel `REDIS_URL`, `REDIS_HOST`, `REDIS_PORT`, `REDIS_DB`, `REDIS_PASSWORD`, `REDIS_KEY_PREFIX`.
 
-## 8. Kimlik (Keycloak as a service)
+## 8. Kimlik (Keycloak as a service, auth-gateway üzerinden)
 
-- Adres: `https://auth.cantalay.com` (Keycloak). `/auth/*` path'i todogi `auth-gateway`'e gider (legacy).
-- Realm başına proje: `https://auth.cantalay.com/realms/<project>`; issuer = bu URL, JWKS = `<issuer>/protocol/openid-connect/certs`.
-- Kod olarak: `talay-identity/stacks/configure/main.tf` → `module "<project>_identity" { source = "../../modules/application-identity" … }`.
-  - Browser client'lar: PUBLIC + PKCE S256, client id `<project>-<key>`.
-  - API client: BEARER-ONLY `<project>-api`; browser token'larına audience mapper ile eklenir.
-  - Realm rolleri; yeni kayıtlara varsayılan `user` rolü.
-- Apply: `KEYCLOAK_USER`/`KEYCLOAK_PASSWORD` (Vault `platform/keycloak`) + geçerli kubeconfig (state cluster'da).
-- Platform realm (argocd/vault/grafana OIDC) ayrıdır; app'ler ona dokunmaz.
+- **Kullanıcı Keycloak sayfası görmez.** Uygulamalar kendi login/kayıt formundan **auth-gateway**'e konuşur:
+  `https://auth.cantalay.com/auth/<realm>/{login,register,refresh,logout,me,change-password,social}`
+  (kod: `github.com/cantalay/auth-gateway`, deploy: talay-environments `apps/prod/todogi/auth-gateway`, ns `gateway`).
+  Eski `/auth/*` yolları varsayılan realm `todogi`'ye gider.
+- Keycloak `https://auth.cantalay.com/realms/*` (gateway yalnız `/auth` path'ini alır). Realm başına proje; realm adı = proje adı,
+  **tire/alt çizgi yok**.
+- Token: `iss=https://auth.cantalay.com/realms/<realm>`, `aud=<realm>-api`, `azp=<realm>-gateway`, roller `realm_access.roles`;
+  JWKS `<iss>/protocol/openid-connect/certs`. API'ler token'ı kendisi doğrular.
+- Kod olarak: `talay-identity/stacks/configure/main.tf` → `module "<project>_identity"` (`modules/application-identity`):
+  realm, roller (yeni kayıtlara `user`), bearer-only `<realm>-api`, `gateway_client_enabled = true` ile
+  `<realm>-gateway` (public, direct grant, API audience) ve `<realm>-gateway-admin` (manage/query/view-users service account).
+  Client `access_token_lifespan` **saniye** (`"300"`).
+- Gateway realm secret'ı: Vault `kv/apps/todogi/keycloak` → `GATEWAY_REALMS_<REALM>_ADMINCLIENTSECRET`; Terraform'a write-only
+  `TF_VAR_gateway_admin_client_secrets` ile verilir (her plan/apply). Gateway'e realm ekleme: values
+  `podAnnotations.talay.io/gateway-realms` + `CORS_ALLOWED_ORIGINS`.
+- Terraform configure çalıştırma: `KEYCLOAK_USER/PASSWORD` (`identity/keycloak-bootstrap` secret'ı veya Vault `platform/keycloak`),
+  `TF_VAR_vault_oidc_client_secret` (sürüm değişmedikçe herhangi bir değer), `TF_VAR_gateway_admin_client_secrets`.
+- Gateway önünde Traefik rate limit (IP başına 60/dk, burst 30). Gateway logları parola/token/secret alanlarını maskeler.
+- Platform realm'i `monitoring` (Argo CD/Vault/Grafana OIDC) ayrıdır; uygulamalar ona dokunmaz.
 
 ## 9. Gözlemlenebilirlik
 
@@ -175,18 +186,23 @@ Grafana https://grafana.cantalay.com (datasource uid: prometheus, loki, tempo)
 | --- | --- | --- | --- |
 | `todogi-web-prod` | todogi-app | todogi.singlestranger.com (+www) | ghcr.io/cantalay/todogi-app |
 | `todogi-backend-prod` | todogi-be | api.singlestranger.com/api (+www) | ghcr.io/cantalay/todogi-api |
-| `auth-gateway-prod` | gateway | auth.cantalay.com/auth | ghcr.io/cantalay/todogi-auth-gateway |
+| `auth-gateway-prod` | gateway | auth.cantalay.com/auth (realm'ler: todogi, hello) | ghcr.io/cantalay/todogi-auth-gateway |
 | `vitafinder-storefront-prod` | vitafinder-storefront | vitafinder.cantalay.com | ghcr.io/cantalay/vitafinder-web |
 | `vitafinder-admin-prod` | vitafinder-admin | admin.vitafinder.cantalay.com | ghcr.io/cantalay/vitafinder-web |
 | `vitafinder-api-prod` | vitafinder-api | api.vitafinder.cantalay.com | ghcr.io/cantalay/vitafinder-core |
 | `vitafinder-worker-prod` | vitafinder-worker | — | ghcr.io/cantalay/vitafinder-core |
+| `hello-api-prod` | hello-api | api.hello.cantalay.com | ghcr.io/cantalay/talay-hello-api (prova; repo cantalay/talay-hello) |
+| `hello-web-prod` | hello-web | hello.cantalay.com | ghcr.io/cantalay/talay-hello-web (prova) |
 
-Bilinen açıklar:
-- VitaFinder api/worker için henüz DB ExternalSecret'ı yok.
-- **CPU request doygunluğu**: 2026-10-03'te pod CPU request toplamı 1995m / 2000m (%99), gerçek kullanım ~%26.
-  En büyük request'ler platform bileşenlerinde (keycloak 250m, prometheus 200m, postgresql 200m, redis 150m, 100m'lik
-  vault/tempo/otel-collector/loki/grafana/argocd-controller/coredns/metrics-server). Yeni bir workload bu düzeltilmeden
-  `Pending` kalır → ilgili talay-* Terraform repolarında request'leri gerçek kullanıma göre düşür (talay-infra-change).
+Veri: `vitafinder` DB'si + Redis index 1 (api, worker), `hello` DB'si (api) provision edildi; Vault `apps/<project>/<component>`.
+
+Bilinen açıklar (2026-10-03):
+- VitaFinder kodu henüz `DATABASE_URL`/`REDIS_URL` okumuyor ve migration runner'ı yok; web'i hâlâ Keycloak yönlendirmeli
+  OIDC kullanıyor (gateway'e geçirilmedi; vitafinder realm'inde gateway client'ı yok).
+- `todogi` realm'i Terraform'da değil, brute-force koruması kapalı. todogi-app'teki Google/Apple girişi mock; forgot/reset
+  password ve avatar uçları gateway'de yok.
+- Vault pod'u `OnDelete` stratejisinde: CPU request düşüşü (100m→50m) pod yeniden oluşturulunca geçerli olur; yeniden
+  başlarsa unseal gerekir.
 
 ## 12. Değişmez kurallar
 

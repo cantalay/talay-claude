@@ -7,7 +7,7 @@ Referans uygulama: `cantalay/vitafinder-core` (pnpm monorepo, Fastify + pino, ap
 - HTTP: `fastify` (tercih) veya `express`
 - Log: `pino` (Fastify yerleşik) — OTel pino instrumentation log'a `trace_id`/`span_id` ekler
 - Metrics: `prom-client`
-- OTel: `@opentelemetry/auto-instrumentations-node` (**dependencies**, devDependencies değil). Chart
+- OTel: `@opentelemetry/auto-instrumentations-node` `^0.80` (**dependencies**, devDependencies değil; 0.62.x HIGH CVE). Chart
   `NODE_OPTIONS=--require @opentelemetry/auto-instrumentations-node/register` verir; `runtime.node.autoInstrumentation.enabled: true`.
   Monorepo/pnpm deploy'da paket runtime `node_modules`'ta çözülebilmeli (`NODE_PATH` gerekirse config'te).
 - JWT: `jose` (`createRemoteJWKSet`, `jwtVerify`)

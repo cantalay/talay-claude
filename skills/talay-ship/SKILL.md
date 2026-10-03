@@ -44,7 +44,8 @@ health endpoint'leri, metrics, OTel, JSON log, env ile config, OIDC (talay-auth 
 ## Faz 5 — Provisioning (her adım öncesi onay)
 Sıra önemlidir:
 1. **DB/Redis** → `talay-database` (Vault `apps/<project>/<component>` içine DB/Redis env'leri yazılır).
-2. **Kimlik** → `talay-auth` (Keycloak realm/client/rol, Terraform plan → onay → apply).
+2. **Kimlik** → `talay-auth` (realm + gateway client'ları Terraform ile, gateway admin secret'ı Vault'a, gateway'e realm/CORS
+   ekleme; login uygulamanın kendi formundan auth-gateway üzerinden — Keycloak sayfası gösterilmez).
 3. **Diğer secret'lar** → `talay-secrets` (kullanıcıdan değerleri güvenli yolla iste; asla sohbete yazdırma —
    `vault kv patch` komutunu kullanıcının kendisi çalıştırabilir).
 
@@ -59,7 +60,8 @@ dashboard/alarmlar (`talay-observability`), `scripts/verify-environments.sh`, co
 ## Faz 8 — Doğrulama ve teslim
 - Argo `Synced/Healthy`, Certificate `Ready`, ExternalSecret `SecretSynced`, pod `Running` restart'sız.
 - `curl -fsS https://<host>/<health>` 200; web için index + `/runtime-config.js`.
-- Auth: `https://auth.cantalay.com/realms/<project>/.well-known/openid-configuration` 200; korumalı endpoint token'sız 401.
+- Auth: gateway ile geçici kullanıcı kaydı + login + korumalı API çağrısı 200, token'sız 401; test kullanıcısını sil.
+  Mümkünse headless tarayıcıyla (Playwright, scratchpad'e kurulur) form akışını dene ve Keycloak sayfasına gidilmediğini doğrula.
 - Gözlem: Tempo'da `service.name=<svc>` trace'i, Prometheus'ta `up{namespace="<ns>"}==1`, Loki'de `{namespace="<ns>"}` log
   (`talay-observability` §Doğrulama sorguları).
 - Kullanıcıya özet: URL'ler, Argo app'leri, Vault path'leri, Keycloak client'ları, Grafana dashboard linki,

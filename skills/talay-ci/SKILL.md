@@ -31,12 +31,13 @@ Monorepo'da birden çok image → her biri için ayrı job, ayrı `image-name`/`
 2. Repo private ve package ilk kez oluşuyorsa: GHCR package ilk push'ta repo'ya bağlanır. Eski/merkezi package'larda
    `GITHUB_TOKEN` yetmezse `GHCR_TOKEN: ${{ secrets.GHCR_PAT }}` geçir (talay-workflows README).
 3. Commit + push (kullanıcı onayı). `gh run list -R cantalay/<repo> -L 1` → `gh run watch <id> -R cantalay/<repo> --exit-status`.
-4. Kırmızıysa `gh run view <id> --log-failed` ile sebebi bul (Trivy bulgusu → base image/bağımlılık güncelle; secret scan
-   bulgusu → dosyayı kaldır ve secret'ı döndür), düzelt, tekrar.
-5. Tag ve digest:
+4. Kırmızıysa `gh run view <id> --log-failed` ile sebebi bul, düzelt, tekrar:
+   - Trivy bağımlılık bulgusu → `npm outdated`/`mvn versions:display-dependency-updates`, yalnız etkilenen paketi yükselt.
+   - Trivy OS paketi bulgusu ("fixed" sürüm var) → GHA cache eski `apk upgrade` katmanını kullanıyor; o RUN satırını değiştir.
+   - Secret scan bulgusu → dosyayı kaldır ve secret'ı döndür.
+5. Tag ve digest (gh token'ında `read:packages` yok; digest'i CI logundan al):
    ```bash
-   TAG=sha-$(git rev-parse --short=7 HEAD)
-   gh api "/users/cantalay/packages/container/<image-adı>/versions" --jq ".[] | select(.metadata.container.tags | index(\"$TAG\")) | .name"
+   gh run view <id> -R cantalay/<repo> --log | grep -oE "ghcr.io/cantalay/<image>:sha-[0-9a-f]{7}@sha256:[0-9a-f]{64}" | sort -u
    ```
    Çıkan `sha256:…` → values `image.digest`.
 

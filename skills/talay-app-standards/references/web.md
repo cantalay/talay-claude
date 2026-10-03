@@ -10,34 +10,33 @@ window.__TALAY_CONFIG__ = {};
 ```
 `src/config.ts`:
 ```ts
-type RuntimeConfig = { API_URL: string; AUTH_URL: string; AUTH_REALM: string; AUTH_CLIENT_ID: string };
+type RuntimeConfig = { API_URL: string; AUTH_URL: string; AUTH_REALM: string };
 const runtime = (window as typeof window & { __TALAY_CONFIG__?: Partial<RuntimeConfig> }).__TALAY_CONFIG__ ?? {};
 export const config: RuntimeConfig = {
   API_URL: runtime.API_URL ?? import.meta.env.VITE_API_URL ?? 'http://localhost:8080',
   AUTH_URL: runtime.AUTH_URL ?? import.meta.env.VITE_AUTH_URL ?? 'https://auth.cantalay.com',
-  AUTH_REALM: runtime.AUTH_REALM ?? import.meta.env.VITE_AUTH_REALM ?? '',
-  AUTH_CLIENT_ID: runtime.AUTH_CLIENT_ID ?? import.meta.env.VITE_AUTH_CLIENT_ID ?? '',
+  AUTH_REALM: runtime.AUTH_REALM ?? import.meta.env.VITE_AUTH_REALM ?? '<project>',
 };
 ```
 nginx (`talay-web` varsayılanı veya env repodaki `nginx/default.conf`) `</head>` öncesine `<script src="/runtime-config.js">`
-enjekte eder; values'taki `runtimeConfig` map'i bu dosyayı üretir. Expo'da `EXPO_PUBLIC_*` anahtarları kullanılabilir (todogi).
+enjekte eder; values'taki `runtimeConfig` map'i bu dosyayı üretir. Expo'da `EXPO_PUBLIC_*` anahtarları kullanılabilir (todogi:
+`EXPO_PUBLIC_AUTH_URL`, `EXPO_PUBLIC_AUTH_REALM`).
 
-## Auth (OIDC + PKCE)
-`oidc-client-ts` (+ `react-oidc-context`) veya `keycloak-js`:
+## Auth (auth-gateway, Keycloak sayfası yok)
+Uygulama kendi login/kayıt formunu gösterir ve auth-gateway'e konuşur (talay-auth). Referans:
+`cantalay/talay-hello` → `web/src/auth.ts` (login/register/refresh/logout + oturum) ve `web/src/App.tsx` (form).
 ```ts
-const userManager = new UserManager({
-  authority: `${config.AUTH_URL}/realms/${config.AUTH_REALM}`,
-  client_id: config.AUTH_CLIENT_ID,
-  redirect_uri: `${location.origin}/auth/callback`,
-  post_logout_redirect_uri: location.origin,
-  response_type: 'code',
-  scope: 'openid profile email',
-  automaticSilentRenew: true,
-});
+const gatewayUrl = (path: string) => `${config.AUTH_URL}/auth/${encodeURIComponent(config.AUTH_REALM)}${path}`;
+// POST /login {email,password} -> {access_token, refresh_token, expires_in}
+// POST /register {email,password,firstName,lastName} -> 201 (sonra login)
+// POST /refresh {refreshToken}; POST /logout (Bearer) {refreshToken}
+// Hata gövdesi: {success:false, error:{status, message}} -> message'ı kullanıcıya göster
 ```
-Keycloak client'ında redirect `https://<host>/*`, web origin `https://<host>` (talay-auth bunu Terraform'la ayarlar).
-Token'ı memory/sessionStorage'da tut; API çağrılarına `Authorization: Bearer`. Rol kontrolü UI'da yalnız görünürlük içindir,
-asıl yetki API'de.
+- API çağrısından önce access token'ın süresi < 30 sn ise `/refresh`.
+- Oturumu `sessionStorage`'da tut (sekme kapanınca biter); "beni hatırla" isteniyorsa kullanıcıya XSS riskini söyle.
+- Parola kuralı (realm politikası): en az 12 karakter, büyük/küçük harf, rakam, özel karakter, kullanıcı adı değil.
+- Rol kontrolü UI'da yalnız görünürlük içindir, asıl yetki API'de.
+- CSP kullanılıyorsa `connect-src` içine `https://auth.cantalay.com` ve API host'u eklenmeli.
 
 ## Build / container
 - Vite: `base: '/'`; birden çok app tek image'da ise `base: '/admin/'` vb. ve nginx `root` alt dizine (vitafinder-web).
@@ -47,13 +46,14 @@ asıl yetki API'de.
 ## Values özeti
 ```yaml
 containerPort: 8080
-runtimeConfig: { API_URL: https://api.<project>.cantalay.com, AUTH_URL: https://auth.cantalay.com, AUTH_REALM: <project>, AUTH_CLIENT_ID: <project>-web }
+runtimeConfig: { API_URL: https://api.<project>.cantalay.com, AUTH_URL: https://auth.cantalay.com, AUTH_REALM: <project> }
 nginx: { existingConfigMap: <fullname>-nginx, configRevision: "1" }   # özel nginx gerekiyorsa
 securityHeaders.contentSecurityPolicy: "default-src 'self'; connect-src 'self' https://api.<project>.cantalay.com https://auth.cantalay.com; …"
 networkPolicy: { enabled: true, denyEgress: true }
 ```
 
 ## Mobil (Expo native)
-Kubernetes'e gitmez. `talay-workflows/expo.yaml` (EAS build/submit), `EXPO_TOKEN` repo secret'ı. Keycloak'ta ayrı public
-client + custom scheme redirect (`<scheme>://auth/callback`) gerekir — talay-auth'ta browser client olarak root_url yerine
-redirect ile eklenmesi için modülde `extra_redirect_uris` kullan.
+Kubernetes'e gitmez. `talay-workflows/expo.yaml` (EAS build/submit), `EXPO_TOKEN` repo secret'ı. Login aynı auth-gateway
+uçlarıyla yapılır; refresh token `expo-secure-store`'da tutulur. Google/Apple girişi için gateway `/social`
+(authorization code + `kc_idp_hint`) kullanılır ve talay-identity'de `gateway_redirect_uris` ile `<scheme>://callback`
+izinli olmalıdır (araya Google sayfası girer, Keycloak sayfası girmez).
