@@ -23,7 +23,7 @@ Kubectl her zaman SSH üzerinden: `ssh root@45.87.80.10 'kubectl …'`. Komut de
 
 | Repo | Ne yapar | Ne zaman dokunulur |
 | --- | --- | --- |
-| `talay-cluster` | K3s kurulum (bootstrap, local state) + namespace/priority class (base) | Neredeyse hiç |
+| `talay-cluster` | K3s kurulum (bootstrap) + namespace/priority class (base) | Neredeyse hiç |
 | `talay-network` | Traefik `41.4.0`, cert-manager `v1.21.1`, `ClusterIssuer/letsencrypt`, ExternalDNS (kapalı) | Nadiren |
 | `talay-data` | PostgreSQL (bitnami 18.8.16) + Redis (bitnami 28.0.14), ns `data` | Yeni app DB'si → `scripts/provision-app-database.sh` |
 | `talay-secrets` | Vault + External Secrets Operator, `ClusterSecretStore/vault` | Nadiren |
@@ -34,8 +34,9 @@ Kubectl her zaman SSH üzerinden: `ssh root@45.87.80.10 'kubectl …'`. Komut de
 | `talay-helm-charts` | `talay-service`, `talay-web`, `talay-common` chartları | Chart özelliği eksikse |
 | `talay-workflows` | Reusable GitHub Actions (java/node/web/expo/helm/terraform/promote) | Nadiren |
 
-Terraform state: `talay-cluster/stacks/bootstrap` hariç hepsi cluster içinde `terraform-states` namespace'inde
-(Kubernetes backend). Terraform çalıştırmak için geçerli kubeconfig gerekir (bkz. `talay-infra-change`).
+Terraform state: bootstrap dahil hepsi cluster içinde `terraform-states` namespace'indeki Secret'larda (Kubernetes backend,
+kilitli). Yerelde state dosyası yok. Terraform çalıştırmak için `talay-cluster/stacks/bootstrap/kubeconfig.yaml` gerekir
+(git-ignored; her backend.hcl bu dosyayı gösterir). API erişilemezken bootstrap: talay-cluster README §Acil durum.
 
 ## 3. Uygulama teslimat akışı
 

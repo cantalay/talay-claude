@@ -8,7 +8,7 @@ description: Talay altyapı Terraform repolarında (talay-cluster, -network, -da
 Bağlam: `${CLAUDE_PLUGIN_ROOT}/PLATFORM.md` §2.
 
 ## Kubeconfig
-State'ler cluster içinde (`terraform-states` ns, Kubernetes backend) → Terraform'un geçerli kubeconfig'e ihtiyacı var.
+Bootstrap dahil bütün state'ler cluster içinde (`terraform-states` ns, Kubernetes backend; yerelde state yok) → Terraform'un geçerli kubeconfig'e ihtiyacı var.
 Lokal `~/.kube/config` eski cluster'a ait. Yeni kubeconfig **kullanıcı onayıyla** alınır (cluster-admin credential'ı):
 ```bash
 umask 077
