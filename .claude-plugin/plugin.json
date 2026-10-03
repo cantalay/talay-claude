@@ -1,6 +1,6 @@
 {
   "name": "talay-platform",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Talay K3s platformu için golden path: proje analizi → platforma uygun geliştirme → Vault/DB/Keycloak/OTel provisioning → Argo CD ile prod deploy.",
   "author": {
     "name": "cantalay",
