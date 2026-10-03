@@ -1,0 +1,37 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: __FULLNAME__-alerts
+  labels:
+    app.kubernetes.io/name: __APP_NAME__
+    app.kubernetes.io/part-of: __PROJECT__
+    talay.io/environment: prod
+spec:
+  groups:
+    - name: __FULLNAME__
+      rules:
+        - alert: TalayAppDown
+          expr: sum(up{namespace="__NAMESPACE__"}) == 0
+          for: 5m
+          labels: { severity: critical, project: __PROJECT__ }
+          annotations:
+            summary: "__NAMESPACE__ scrape hedefi 5 dakikadır ayakta değil"
+        - alert: TalayAppCrashLooping
+          expr: increase(kube_pod_container_status_restarts_total{namespace="__NAMESPACE__"}[15m]) > 3
+          labels: { severity: warning, project: __PROJECT__ }
+          annotations:
+            summary: "__NAMESPACE__ içinde pod 15 dakikada 3'ten fazla yeniden başladı"
+        - alert: TalayAppHighErrorRate
+          expr: |
+            sum(rate(http_server_request_duration_seconds_count{k8s_namespace_name="__NAMESPACE__",http_response_status_code=~"5.."}[5m]))
+              / clamp_min(sum(rate(http_server_request_duration_seconds_count{k8s_namespace_name="__NAMESPACE__"}[5m])), 1e-9) > 0.05
+          for: 10m
+          labels: { severity: warning, project: __PROJECT__ }
+          annotations:
+            summary: "__NAMESPACE__ 5xx oranı %5'in üzerinde"
+        - alert: TalayAppSlow
+          expr: histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket{k8s_namespace_name="__NAMESPACE__"}[5m]))) > 1
+          for: 10m
+          labels: { severity: warning, project: __PROJECT__ }
+          annotations:
+            summary: "__NAMESPACE__ p95 gecikme 1 saniyenin üzerinde"

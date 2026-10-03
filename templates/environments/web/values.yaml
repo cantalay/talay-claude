@@ -1,0 +1,44 @@
+fullnameOverride: __PROJECT__-__COMPONENT__
+environment: prod
+partOf: __PROJECT__
+replicaCount: 1
+
+image:
+  repository: ghcr.io/cantalay/__IMAGE__
+  tag: "sha-__SHA7__"
+  digest: "__DIGEST__"          # sha256:… (bilinmiyorsa satırı sil)
+  pullPolicy: IfNotPresent
+
+registrySecret:
+  enabled: true
+  remoteKey: platform/registry/ghcr
+  targetName: ghcr-pull
+
+containerPort: 8080
+
+runtimeConfig:                  # tarayıcıya /runtime-config.js ile gider (herkese açık; secret koyma)
+  API_URL: https://__API_HOST__
+  AUTH_URL: https://auth.cantalay.com
+  AUTH_REALM: __PROJECT__
+  AUTH_CLIENT_ID: __PROJECT__-__COMPONENT__
+
+nginx:
+  existingConfigMap: __PROJECT__-__COMPONENT__-nginx
+  configRevision: "1"           # nginx/default.conf her değiştiğinde artır
+
+networkPolicy:
+  enabled: true
+  denyEgress: true
+
+resources:
+  requests:
+    cpu: 10m
+    memory: 32Mi
+  limits:
+    memory: 96Mi
+
+autoscaling:
+  enabled: false
+
+podDisruptionBudget:
+  enabled: false

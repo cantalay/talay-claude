@@ -1,0 +1,93 @@
+{
+  "title": "__TITLE__",
+  "uid": "__NAMESPACE__",
+  "tags": ["talay", "__PROJECT__"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "refresh": "30s",
+  "time": { "from": "now-6h", "to": "now" },
+  "templating": {
+    "list": [
+      { "name": "namespace", "type": "constant", "query": "__NAMESPACE__", "hide": 2 },
+      { "name": "service", "type": "constant", "query": "__SERVICE__", "hide": 2 }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1, "type": "stat", "title": "Up",
+      "gridPos": { "x": 0, "y": 0, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "sum(up{namespace=\"$namespace\"})" }]
+    },
+    {
+      "id": 2, "type": "stat", "title": "İstek/sn",
+      "gridPos": { "x": 4, "y": 0, "w": 5, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "reqps", "decimals": 2 } },
+      "targets": [{ "refId": "A", "expr": "sum(rate(http_server_request_duration_seconds_count{k8s_namespace_name=\"$namespace\"}[5m]))" }]
+    },
+    {
+      "id": 3, "type": "stat", "title": "5xx oranı",
+      "gridPos": { "x": 9, "y": 0, "w": 5, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "decimals": 2 } },
+      "targets": [{ "refId": "A", "expr": "sum(rate(http_server_request_duration_seconds_count{k8s_namespace_name=\"$namespace\",http_response_status_code=~\"5..\"}[5m])) / clamp_min(sum(rate(http_server_request_duration_seconds_count{k8s_namespace_name=\"$namespace\"}[5m])), 1e-9)" }]
+    },
+    {
+      "id": 4, "type": "stat", "title": "p95 süre",
+      "gridPos": { "x": 14, "y": 0, "w": 5, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "s", "decimals": 3 } },
+      "targets": [{ "refId": "A", "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket{k8s_namespace_name=\"$namespace\"}[5m])))" }]
+    },
+    {
+      "id": 5, "type": "stat", "title": "Restart (24s)",
+      "gridPos": { "x": 19, "y": 0, "w": 5, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "expr": "sum(increase(kube_pod_container_status_restarts_total{namespace=\"$namespace\"}[24h]))" }]
+    },
+    {
+      "id": 6, "type": "timeseries", "title": "İstek/sn — route ve durum",
+      "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "reqps" } },
+      "targets": [{ "refId": "A", "legendFormat": "{{http_request_method}} {{http_route}} {{http_response_status_code}}", "expr": "sum by (http_request_method, http_route, http_response_status_code) (rate(http_server_request_duration_seconds_count{k8s_namespace_name=\"$namespace\"}[5m]))" }]
+    },
+    {
+      "id": 7, "type": "timeseries", "title": "Gecikme p50 / p95 / p99",
+      "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "targets": [
+        { "refId": "A", "legendFormat": "p50", "expr": "histogram_quantile(0.50, sum by (le) (rate(http_server_request_duration_seconds_bucket{k8s_namespace_name=\"$namespace\"}[5m])))" },
+        { "refId": "B", "legendFormat": "p95", "expr": "histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket{k8s_namespace_name=\"$namespace\"}[5m])))" },
+        { "refId": "C", "legendFormat": "p99", "expr": "histogram_quantile(0.99, sum by (le) (rate(http_server_request_duration_seconds_bucket{k8s_namespace_name=\"$namespace\"}[5m])))" }
+      ]
+    },
+    {
+      "id": 8, "type": "timeseries", "title": "CPU (cores)",
+      "gridPos": { "x": 0, "y": 12, "w": 12, "h": 7 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [{ "refId": "A", "legendFormat": "{{pod}}", "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{namespace=\"$namespace\",container!=\"\"}[5m]))" }]
+    },
+    {
+      "id": 9, "type": "timeseries", "title": "Bellek (working set)",
+      "gridPos": { "x": 12, "y": 12, "w": 12, "h": 7 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "bytes" } },
+      "targets": [{ "refId": "A", "legendFormat": "{{pod}}", "expr": "sum by (pod) (container_memory_working_set_bytes{namespace=\"$namespace\",container!=\"\"})" }]
+    },
+    {
+      "id": 10, "type": "logs", "title": "Hata logları",
+      "gridPos": { "x": 0, "y": 19, "w": 24, "h": 9 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [{ "refId": "A", "expr": "{namespace=\"$namespace\"} |~ \"(?i)(\\\"level\\\":(50|60)|\\\"level\\\":\\\"(error|fatal)\\\"|ERROR|Exception)\"" }]
+    },
+    {
+      "id": 11, "type": "table", "title": "Son trace'ler",
+      "gridPos": { "x": 0, "y": 28, "w": 24, "h": 8 },
+      "datasource": { "type": "tempo", "uid": "tempo" },
+      "targets": [{ "refId": "A", "queryType": "traceql", "query": "{ resource.service.name = \"$service\" }", "limit": 20 }]
+    }
+  ]
+}

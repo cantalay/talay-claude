@@ -1,0 +1,34 @@
+name: mobile-build
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Mobile platform
+        type: choice
+        options: [all, android, ios]
+        default: all
+      profile:
+        description: EAS build profile
+        type: choice
+        options: [preview, production, development]
+        default: preview
+      submit:
+        description: Submit the latest build to the stores
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  expo:
+    uses: cantalay/talay-workflows/.github/workflows/expo.yaml@__TALAY_WORKFLOWS_SHA__
+    with:
+      node-version: "24"
+      package-manager: npm
+      platform: ${{ inputs.platform }}
+      profile: ${{ inputs.profile }}
+      submit: ${{ inputs.submit }}
+    secrets:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}

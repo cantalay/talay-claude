@@ -1,0 +1,6 @@
+name: __PROJECT__-__COMPONENT__
+environment: prod
+namespace: __PROJECT__-__COMPONENT__
+chartPath: charts/talay-web
+valuesFile: apps/prod/__PROJECT__/__COMPONENT__/values.yaml
+manifestsPath: apps/prod/__PROJECT__/__COMPONENT__

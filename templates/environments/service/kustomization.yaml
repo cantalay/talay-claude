@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - certificate/certificate.yaml     # host yoksa (worker) sil
+  - ingress/ingress.yaml             # host yoksa (worker) sil
+  # - alerts/prometheusrule.yaml
+
+# Dashboard (projede bir component'te yeterli):
+# configMapGenerator:
+#   - name: __PROJECT__-__COMPONENT__-dashboard
+#     files:
+#       - __PROJECT__-__COMPONENT__.json=dashboard/dashboard.json
+#     options:
+#       labels:
+#         grafana_dashboard: "1"
+#       annotations:
+#         grafana_folder: __PROJECT__
+# generatorOptions:
+#   disableNameSuffixHash: true

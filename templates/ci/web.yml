@@ -1,0 +1,24 @@
+name: verify-build-publish
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+  security-events: write
+
+jobs:
+  web:
+    uses: cantalay/talay-workflows/.github/workflows/web.yaml@__TALAY_WORKFLOWS_SHA__
+    with:
+      node-version: "24"
+      package-manager: pnpm
+      pnpm-version: "11.25.0"
+      build-command: build
+      image-name: ghcr.io/cantalay/__IMAGE__
+      push-image: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+      upload-sarif: false

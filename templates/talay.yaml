@@ -1,0 +1,65 @@
+# talay.yaml — Talay deploy manifestosu (app reposunun kökünde, secret DEĞERİ içermez)
+# talay-ship bu dosyayı okuyarak provisioning ve deploy yapar.
+project: example            # DNS-1123; realm, Vault path ve namespace öneki
+displayName: Example
+environment: prod
+
+auth:                       # Keycloak realm'i: https://auth.cantalay.com/realms/<project>
+  enabled: true
+  selfRegistration: true
+  defaultRole: user
+  roles: [user, admin]
+  browserClients:           # PUBLIC + PKCE; client id = <project>-<key>
+    web: https://example.cantalay.com
+    # admin: https://admin.example.cantalay.com
+  apiClient: true           # BEARER-ONLY <project>-api, browser token audience'ına eklenir
+
+data:
+  postgres:
+    enabled: true
+    database: example       # DB adı ve owner role adı
+    consumers: [api, worker]  # Vault apps/<project>/<component> path'lerine DB env'leri yazılır
+  redis:
+    enabled: false
+    db: null                # talay-data/README.md tahsis tablosundan boş index
+    consumers: [api]
+
+components:
+  - name: api
+    chart: talay-service
+    runtime: node           # java | node
+    image: ghcr.io/cantalay/example-api
+    repo: cantalay/example  # CI'ın koştuğu repo
+    port: 8080
+    host: api.example.cantalay.com
+    pathPrefix: /           # ingress path
+    health: { startup: /health/startup, readiness: /health/ready, liveness: /health/live }
+    metricsPath: /metrics
+    secrets: [DATABASE_URL]   # beklenen secret KEY adları (değerler Vault'ta)
+    config:                   # secret olmayan env
+      NODE_ENV: production
+    resources: { cpu: 50m, memory: 192Mi, memoryLimit: 384Mi }
+  - name: worker
+    chart: talay-service
+    runtime: node
+    image: ghcr.io/cantalay/example-api
+    port: 8080
+    host: null              # ingress yok
+    health: { startup: /health/startup, readiness: /health/ready, liveness: /health/live }
+    metricsPath: /metrics
+    resources: { cpu: 25m, memory: 128Mi, memoryLimit: 256Mi }
+  - name: web
+    chart: talay-web
+    image: ghcr.io/cantalay/example-web
+    repo: cantalay/example-web
+    host: example.cantalay.com
+    runtimeConfig:          # window.__TALAY_CONFIG__
+      API_URL: https://api.example.cantalay.com
+      AUTH_URL: https://auth.cantalay.com
+      AUTH_REALM: example
+      AUTH_CLIENT_ID: example-web
+
+observability:
+  samplingRatio: "0.25"
+  dashboard: true
+  alerts: true

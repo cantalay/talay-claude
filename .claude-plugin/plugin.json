@@ -1,0 +1,12 @@
+{
+  "name": "talay-platform",
+  "version": "0.1.0",
+  "description": "Talay K3s platformu için golden path: proje analizi → platforma uygun geliştirme → Vault/DB/Keycloak/OTel provisioning → Argo CD ile prod deploy.",
+  "author": {
+    "name": "cantalay",
+    "email": "cantalay0@gmail.com"
+  },
+  "homepage": "https://github.com/cantalay/talay-claude",
+  "repository": "https://github.com/cantalay/talay-claude",
+  "keywords": ["talay", "k3s", "argocd", "vault", "keycloak", "opentelemetry", "deploy"]
+}

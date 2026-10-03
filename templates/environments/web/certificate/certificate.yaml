@@ -1,0 +1,19 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: __PROJECT__-__COMPONENT__-tls
+  labels:
+    app.kubernetes.io/name: __PROJECT__-__COMPONENT__
+    app.kubernetes.io/part-of: __PROJECT__
+    talay.io/environment: prod
+spec:
+  secretName: __PROJECT__-__COMPONENT__-tls
+  dnsNames:
+    - __HOST__
+  issuerRef:
+    group: cert-manager.io
+    kind: ClusterIssuer
+    name: letsencrypt
+  usages:
+    - digital signature
+    - key encipherment

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "talay",
+  "description": "Talay platform plugin'leri",
+  "owner": {
+    "name": "cantalay",
+    "email": "cantalay0@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "talay-platform",
+      "description": "Talay platformuna teknoloji bağımsız uygulama geliştirme ve uçtan uca deploy skill'leri.",
+      "source": "./",
+      "category": "deployment"
+    }
+  ]
+}

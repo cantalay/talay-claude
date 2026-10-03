@@ -1,0 +1,74 @@
+fullnameOverride: __PROJECT__-__COMPONENT__
+environment: prod
+partOf: __PROJECT__
+replicaCount: 1
+
+image:
+  repository: ghcr.io/cantalay/__IMAGE__
+  tag: "sha-__SHA7__"
+  digest: "__DIGEST__"          # sha256:… (bilinmiyorsa satırı sil)
+  pullPolicy: IfNotPresent
+
+registrySecret:
+  enabled: true
+  remoteKey: platform/registry/ghcr
+  targetName: ghcr-pull
+
+runtime:
+  type: __RUNTIME__             # java | node
+  java:
+    agent:
+      enabled: true             # yalnız java
+    toolOptions: "-XX:MaxRAMPercentage=70"
+  node:
+    autoInstrumentation:
+      enabled: true             # yalnız node; @opentelemetry/auto-instrumentations-node production dependency olmalı
+
+containerPort: 8080
+
+config:                         # secret OLMAYAN env
+  PORT: "8080"
+  KEYCLOAK_ISSUER_URL: https://auth.cantalay.com/realms/__PROJECT__   # java: KEYCLOAK_ISSUER_URI
+  KEYCLOAK_AUDIENCE: __PROJECT__-api
+  CORS_ORIGINS: https://__WEB_HOST__
+
+externalSecret:
+  enabled: true
+  remoteKey: apps/__PROJECT__/__COMPONENT__
+  targetName: __PROJECT__-__COMPONENT__-secrets
+
+observability:
+  enabled: true
+  serviceName: __PROJECT__-__COMPONENT__
+  samplingRatio: "0.25"
+
+probes:                         # java/spring: /actuator/health/liveness ve /actuator/health/readiness
+  startup:
+    enabled: true
+    path: /health/startup
+    failureThreshold: 30
+    periodSeconds: 5
+  readiness:
+    enabled: true
+    path: /health/ready
+  liveness:
+    enabled: true
+    path: /health/live
+
+serviceMonitor:
+  enabled: true
+  path: /metrics                # java/spring: /actuator/prometheus
+  interval: 30s
+
+resources:
+  requests:
+    cpu: 25m
+    memory: 128Mi
+  limits:
+    memory: 384Mi
+
+autoscaling:
+  enabled: false
+
+podDisruptionBudget:
+  enabled: false

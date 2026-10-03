@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - certificate/certificate.yaml
+  - ingress/ingress.yaml
+
+# Özel nginx gerekmiyorsa bu bloğu ve nginx/ dizinini sil, values'tan nginx.existingConfigMap'i kaldır.
+configMapGenerator:
+  - name: __PROJECT__-__COMPONENT__-nginx
+    files:
+      - default.conf=nginx/default.conf
+
+generatorOptions:
+  disableNameSuffixHash: true
+  labels:
+    app.kubernetes.io/name: __PROJECT__-__COMPONENT__
+    app.kubernetes.io/part-of: __PROJECT__
+    talay.io/environment: prod
