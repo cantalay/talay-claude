@@ -59,7 +59,7 @@ Planı özetle (yalnız yeni realm kaynakları), onay → `terraform apply tfpla
 Değişikliği branch + PR olarak push et.
 
 ### 4. Gateway'e realm ekle (talay-environments `apps/prod/todogi/auth-gateway/values.yaml`)
-- `podAnnotations.talay.io/gateway-realms`: listeye realm'i ekle (`"hello,<project>"`) → rollout tetikler, yeni secret env'e girer.
+- `podAnnotations.talay.io/gateway-realms`: listeye realm'i ekle (`"vitafinder,<project>"`) → rollout tetikler, yeni secret env'e girer.
 - `config.CORS_ALLOWED_ORIGINS`: web origin'ini ekle.
 - Gerekirse önce ExternalSecret'ı tazele: `kubectl annotate externalsecret -n gateway auth-gateway-secrets force-sync=$(date +%s) --overwrite`.
 
@@ -73,7 +73,7 @@ curl -H "Authorization: Bearer <token>" https://api.<project>.cantalay.com/<koru
 Test kullanıcılarını admin API ile sil (`DELETE /admin/realms/<project>/users/<id>`).
 
 ## Uygulama tarafı
-- Web: `talay-app-standards/references/web.md` §Auth (gateway formu; referans `cantalay/talay-hello` `web/src/auth.ts`).
+- Web: `talay-app-standards/references/web.md` §Auth (gateway formu; referans `cantalay/vitafinder-web` `packages/shared/src/auth.ts`).
 - Backend: issuer + audience ile JWT doğrula (java-spring.md / node.md). Rol kontrolü backend'de.
 - Mobil: aynı gateway uçları; refresh token'ı güvenli depoda (expo-secure-store) tut.
 

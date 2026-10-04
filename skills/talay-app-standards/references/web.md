@@ -24,7 +24,7 @@ enjekte eder; values'taki `runtimeConfig` map'i bu dosyayı üretir. Expo'da `EX
 
 ## Auth (auth-gateway, Keycloak sayfası yok)
 Uygulama kendi login/kayıt formunu gösterir ve auth-gateway'e konuşur (talay-auth). Referans:
-`cantalay/talay-hello` → `web/src/auth.ts` (login/register/refresh/logout + oturum) ve `web/src/App.tsx` (form).
+`cantalay/vitafinder-web` → `packages/shared/src/auth.ts` (login/register/refresh/logout + oturum) ve `packages/shared/src/config.ts`.
 ```ts
 const gatewayUrl = (path: string) => `${config.AUTH_URL}/auth/${encodeURIComponent(config.AUTH_REALM)}${path}`;
 // POST /login {email,password} -> {access_token, refresh_token, expires_in}
