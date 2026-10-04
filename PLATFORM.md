@@ -3,7 +3,7 @@
 Bu dosya talay platformunun **tek doğruluk kaynağıdır**. Her `talay-*` skill'i buna göre çalışır.
 Burada yazan bir değer ile canlı cluster çelişirse canlı durumu esas al, sonra bu dosyayı güncelle.
 
-Son doğrulama: 2026-10-03 (canlı cluster + repolar; auth-gateway çok-realm geçişi sonrası).
+Son doğrulama: 2026-10-04 (canlı cluster + repolar; VitaFinder yeniden yazım deploy'u sonrası).
 
 ## 1. Topoloji
 
@@ -187,7 +187,7 @@ Grafana https://grafana.cantalay.com (datasource uid: prometheus, loki, tempo)
 | --- | --- | --- | --- |
 | `todogi-web-prod` | todogi-app | todogi.singlestranger.com (+www) | ghcr.io/cantalay/todogi-app |
 | `todogi-backend-prod` | todogi-be | api.singlestranger.com/api (+www) | ghcr.io/cantalay/todogi-api |
-| `auth-gateway-prod` | gateway | auth.cantalay.com/auth (realm'ler: todogi, hello) | ghcr.io/cantalay/todogi-auth-gateway |
+| `auth-gateway-prod` | gateway | auth.cantalay.com/auth (realm'ler: todogi, hello, vitafinder) | ghcr.io/cantalay/todogi-auth-gateway |
 | `vitafinder-storefront-prod` | vitafinder-storefront | vitafinder.cantalay.com | ghcr.io/cantalay/vitafinder-web |
 | `vitafinder-admin-prod` | vitafinder-admin | admin.vitafinder.cantalay.com | ghcr.io/cantalay/vitafinder-web |
 | `vitafinder-api-prod` | vitafinder-api | api.vitafinder.cantalay.com | ghcr.io/cantalay/vitafinder-core |
@@ -198,8 +198,12 @@ Grafana https://grafana.cantalay.com (datasource uid: prometheus, loki, tempo)
 Veri: `vitafinder` DB'si + Redis index 1 (api, worker), `hello` DB'si (api) provision edildi; Vault `apps/<project>/<component>`.
 
 Bilinen açıklar (2026-10-03):
-- VitaFinder kodu henüz `DATABASE_URL`/`REDIS_URL` okumuyor ve migration runner'ı yok; web'i hâlâ Keycloak yönlendirmeli
-  OIDC kullanıyor (gateway'e geçirilmedi; vitafinder realm'inde gateway client'ı yok).
+- VitaFinder (2026-10-04 yeniden yazıldı, NestJS + React): login auth-gateway üzerinden; harici entegrasyon anahtarları
+  (Telegram/SMTP/VAPID/Instagram/proxy) bilinçli istisna olarak Vault'ta değil, admin panelden girilip DB'de AES-GCM ile
+  şifreli tutulur (ana anahtar Vault `apps/vitafinder/{api,worker}` `SECRETS_ENCRYPTION_KEY`). Worker ilk tarama
+  döneminde ~0,3 CPU kullanır (request 50m).
+- talay-web özel nginx config'lerinde (`nginx/default.conf`) `add_header` tanımlayan her `location` sunucu seviyesindeki
+  güvenlik başlıklarını miras almaz; başlıklar o location'larda tekrar edilmeli (vitafinder'da düzeltildi; todogi/hello'ya bakılmadı).
 - `todogi` realm'i Terraform'da değil, brute-force koruması kapalı. todogi-app'teki Google/Apple girişi mock; forgot/reset
   password ve avatar uçları gateway'de yok.
 - Vault pod'u `OnDelete` stratejisinde: CPU request düşüşü (100m→50m) pod yeniden oluşturulunca geçerli olur; yeniden
