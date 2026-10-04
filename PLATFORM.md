@@ -203,7 +203,8 @@ Bilinen açıklar (2026-10-03):
   şifreli tutulur (ana anahtar Vault `apps/vitafinder/{api,worker}` `SECRETS_ENCRYPTION_KEY`). Worker ilk tarama
   döneminde ~0,3 CPU kullanır (request 50m).
 - talay-web özel nginx config'lerinde (`nginx/default.conf`) `add_header` tanımlayan her `location` sunucu seviyesindeki
-  güvenlik başlıklarını miras almaz; başlıklar o location'larda tekrar edilmeli (vitafinder'da düzeltildi; todogi/hello'ya bakılmadı).
+  güvenlik başlıklarını miras almaz; başlıklar o location'larda tekrar edilmeli. vitafinder'da düzeltildi; talay-web chart'ının
+  varsayılan config'inde de aynı sorun var (2026-10-04: hello ve todogi HTML yanıtlarında HSTS/X-Frame-Options/Permissions-Policy yok).
 - `todogi` realm'i Terraform'da değil, brute-force koruması kapalı. todogi-app'teki Google/Apple girişi mock; forgot/reset
   password ve avatar uçları gateway'de yok.
 - Vault pod'u `OnDelete` stratejisinde: CPU request düşüşü (100m→50m) pod yeniden oluşturulunca geçerli olur; yeniden
