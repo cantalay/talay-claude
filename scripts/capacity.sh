@@ -2,7 +2,7 @@
 # Tek node kapasite kontrolü. Kullanım: capacity.sh [eklenecek_cpu_milicore] [eklenecek_bellek_Mi]
 # Requests toplamı + ekleme, allocatable'ın %85'ini aşıyorsa NO_FIT döner (exit 2).
 set -euo pipefail
-TALAY_HOST="${TALAY_HOST:-45.87.80.10}"
+TALAY_HOST="${TALAY_HOST:-152.53.66.101}"
 add_cpu="${1:-0}"; add_mem="${2:-0}"
 LIMIT_PCT="${TALAY_CAPACITY_PCT:-85}"
 

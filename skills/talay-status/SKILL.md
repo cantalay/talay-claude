@@ -1,6 +1,6 @@
 ---
 name: talay-status
-description: Talay cluster'ının (45.87.80.10) ve uygulamaların canlı durumunu SSH üzerinden salt-okunur kontrol eder — node kaynakları, Argo CD app sync/health, pod'lar, sertifikalar, ExternalSecret'lar, Vault seal, son olaylar — ve sık arızalar için teşhis reçeteleri verir. "durum", "status", "çalışıyor mu", "neden açılmıyor", "pod crash", "sertifika", "sync olmadı" isteklerinde kullan.
+description: Talay cluster'ının (152.53.66.101) ve uygulamaların canlı durumunu SSH üzerinden salt-okunur kontrol eder — node kaynakları, Argo CD app sync/health, pod'lar, sertifikalar, ExternalSecret'lar, Vault seal, son olaylar — ve sık arızalar için teşhis reçeteleri verir. "durum", "status", "çalışıyor mu", "neden açılmıyor", "pod crash", "sertifika", "sync olmadı" isteklerinde kullan.
 ---
 
 # talay-status
@@ -17,7 +17,7 @@ cert'ler, sync olmayan ExternalSecret'lar, Vault seal durumu, son Warning event'
 
 ## Tek app teşhisi
 ```bash
-K="ssh root@45.87.80.10 kubectl"
+K="ssh root@152.53.66.101 kubectl"
 $K get application -n gitops <app>-prod -o jsonpath='{.status.sync.status} {.status.health.status} {.status.operationState.message}'
 $K get pods -n <ns> -o wide
 $K describe pod -n <ns> <pod> | tail -30
@@ -44,5 +44,5 @@ Log'larda secret değeri görürsen kullanıcıya yansıtma; bunu bir bulgu olar
 
 ## Vault
 ```bash
-ssh root@45.87.80.10 "kubectl exec -n vault vault-0 -- vault status -format=json" | jq '{sealed, initialized, version}'
+ssh root@152.53.66.101 "kubectl exec -n vault vault-0 -- vault status -format=json" | jq '{sealed, initialized, version}'
 ```

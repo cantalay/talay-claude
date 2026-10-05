@@ -48,7 +48,7 @@ registrySecret:
 Web (talay-web) secret almaz; tarayıcıya giden her şey zaten herkese açıktır → `runtimeConfig`.
 
 ## Durum / rotasyon
-- `ssh root@45.87.80.10 kubectl get externalsecret -n <ns>` → `SecretSynced True`. `refreshInterval: 1h`; anında
+- `ssh root@152.53.66.101 kubectl get externalsecret -n <ns>` → `SecretSynced True`. `refreshInterval: 1h`; anında
   çekmek için: `kubectl annotate externalsecret <name> -n <ns> force-sync=$(date +%s) --overwrite` (canlı değişiklik → onay).
 - Env'ler pod başlangıcında okunur: secret değişince rollout gerekir (`kubectl rollout restart deploy/<name> -n <ns>`, onayla).
 - Hata `SecretSyncedError` → path/key yanlış veya Vault sealed (`talay-status` §Vault).

@@ -15,7 +15,7 @@ Bağlam: `${CLAUDE_PLUGIN_ROOT}/PLATFORM.md` §6–§7. Script: `$TALAY_INFRA_DI
 
 ## Ön koşullar
 - `vault login -method=oidc` (VAULT_ADDR=https://vault.cantalay.com) — `vault token lookup` çalışmalı.
-- `ssh root@45.87.80.10` erişimi (script `kubectl exec` için SSH kullanır).
+- `ssh root@152.53.66.101` erişimi (script `kubectl exec` için SSH kullanır).
 
 ## Akış
 1. `talay.yaml` → `data.postgres.database`, `consumers`; `data.redis.db`, `consumers`.
@@ -48,7 +48,7 @@ Bağlam: `${CLAUDE_PLUGIN_ROOT}/PLATFORM.md` §6–§7. Script: `$TALAY_INFRA_DI
 ## Sorun giderme / inceleme (salt-okunur, onayla)
 - Bağlantı testi pod içinden: uygulama `/health/ready` 503 → `talay-status` ile log'a bak (`password authentication failed`
   → Vault değeri ile role parolası uyuşmuyor → `--rotate`).
-- DB listesi: `ssh root@45.87.80.10 "kubectl exec -n data postgresql-0 -c postgresql -- sh -c 'PGPASSWORD=\$(cat /opt/bitnami/postgresql/secrets/postgres-password) psql -U postgres -Atc \"select datname from pg_database\"'"`
+- DB listesi: `ssh root@152.53.66.101 "kubectl exec -n data postgresql-0 -c postgresql -- sh -c 'PGPASSWORD=\$(cat /opt/bitnami/postgresql/secrets/postgres-password) psql -U postgres -Atc \"select datname from pg_database\"'"`
   — prod veri okumasıdır, kullanıcıdan izin iste.
 
 ## Yapma

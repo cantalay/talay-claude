@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Talay salt-okunur durum raporu. Kullanım: status.sh [namespace]
 set -uo pipefail
-TALAY_HOST="${TALAY_HOST:-45.87.80.10}"
+TALAY_HOST="${TALAY_HOST:-152.53.66.101}"
 ns="${1:-}"
 
 if [[ -z "$ns" ]]; then

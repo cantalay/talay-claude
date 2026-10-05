@@ -36,7 +36,7 @@ Alertmanager config'i Vault `platform/alertmanager`'da (alıcılar oradan); app'
 ## Doğrulama sorguları (deploy sonrası)
 Kubernetes API server service proxy'si ile (exec gerekmez; Grafana image'ında shell yok):
 ```bash
-R='ssh root@45.87.80.10 kubectl get --raw /api/v1/namespaces/monitoring/services'
+R='ssh root@152.53.66.101 kubectl get --raw /api/v1/namespaces/monitoring/services'
 # ServiceMonitor scrape (1 = ayakta)
 $R'/kube-prometheus-stack-prometheus:9090/proxy/api/v1/query?query=up%7Bnamespace%3D%22<ns>%22%7D'
 # OTel metrikleri (otel-collector → Prometheus; etiketler: k8s_namespace_name, exported_job="<ns>/<svc>")

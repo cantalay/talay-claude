@@ -11,7 +11,7 @@ Repo: `$TALAY_INFRA_DIR/talay-environments` (önce `git pull --ff-only`).
 ## Yeni component
 1. **Kapasite**: `bash ${CLAUDE_PLUGIN_ROOT}/scripts/capacity.sh <eklenecek cpu m> <eklenecek bellek Mi>` → `FITS` değilse kullanıcıya
    seçenekleri sun (requests'i küçült, başka workload'u kapat, sunucu büyüt).
-2. **DNS**: `dig +short <host> @1.1.1.1` = `45.87.80.10`. Değilse A kaydını kullanıcıya söyle, bekle.
+2. **DNS**: `dig +short <host> @1.1.1.1` = `152.53.66.101`. Değilse A kaydını kullanıcıya söyle, bekle.
 3. **Dizin**: `apps/prod/<project>/<component>/` — şablonu kopyala, `__PLACEHOLDER__`'ları `talay.yaml`'dan doldur:
    - `application.yaml`: `name: <project>-<component>`, `namespace: <project>-<component>`, chartPath, valuesFile, manifestsPath.
    - `values.yaml`: `fullnameOverride` = namespace; image repository + tag (`sha-<7>`) + digest; `partOf: <project>`;
@@ -25,8 +25,8 @@ Repo: `$TALAY_INFRA_DIR/talay-environments` (önce `git pull --ff-only`).
    (talay-environments'ta branch protection yok; kullanıcı PR isterse branch + `gh pr create`).
 6. **Takip** (her 15–30 sn, en fazla ~10 dk):
    ```bash
-   ssh root@45.87.80.10 "kubectl get application -n gitops <project>-<component>-prod -o jsonpath='{.status.sync.status} {.status.health.status}{\"\n\"}'"
-   ssh root@45.87.80.10 "kubectl get pods,certificate,externalsecret,ingress -n <ns>"
+   ssh root@152.53.66.101 "kubectl get application -n gitops <project>-<component>-prod -o jsonpath='{.status.sync.status} {.status.health.status}{\"\n\"}'"
+   ssh root@152.53.66.101 "kubectl get pods,certificate,externalsecret,ingress -n <ns>"
    ```
    Argo 3 dk'da bir poll eder; beklemek istemezsen: `kubectl annotate application -n gitops <app> argocd.argoproj.io/refresh=normal --overwrite`.
 7. **Doğrulama**: `curl -fsS https://<host><health>`; sertifika `Ready`; pod restart 0. Takılırsa `talay-status` §Arıza reçeteleri.

@@ -3,19 +3,20 @@
 Bu dosya talay platformunun **tek doğruluk kaynağıdır**. Her `talay-*` skill'i buna göre çalışır.
 Burada yazan bir değer ile canlı cluster çelişirse canlı durumu esas al, sonra bu dosyayı güncelle.
 
-Son doğrulama: 2026-10-04 (canlı cluster + repolar; VitaFinder yeniden yazım deploy'u sonrası).
+Son doğrulama: 2026-10-05 (cluster netcup sunucusuna taşındı).
 
 ## 1. Topoloji
 
 | Öğe | Değer |
 | --- | --- |
-| Sunucu | `srv468915`, public IP `45.87.80.10`, Ubuntu 24.04, tek node |
+| Sunucu | netcup RS 2000 (Viyana), public IP `152.53.66.101` (`v2202610431629533323.goodsrv.de`), Debian 13, tek node. Kubernetes node adı taşımadan kalma `srv468915` (`/etc/rancher/k3s/config.yaml` `node-name`; local-path PV affinity buna bağlı, değiştirme) |
 | Kubernetes | K3s `v1.36.4+k3s1`, K3s'in kendi Traefik'i kapalı |
-| Kapasite | 2 vCPU, 7.8Gi RAM, swap yok. 2026-10-03: CPU request %54, RAM kullanım ~%75 → **her yeni workload'dan önce kapasite kontrolü** |
-| Erişim | `ssh root@45.87.80.10` (SSH key ile). Lokal `~/.kube/config` **eski cluster'a ait, kullanma** |
+| Kapasite | 8 dedicated vCPU (AMD EPYC 9645), 15Gi RAM, swap yok, 251G disk → yeni workload'dan önce yine kapasite kontrolü |
+| Eski sunucu | Hostinger `45.87.80.10` (`srv468915`, 2 paylaşımlı vCPU, CPU throttling yaşadı; 2028-01'e kadar kiralı). k3s kapalı/disabled. 2026-10-05'ten beri 80/443'ü yeni sunucuya DNAT ediyor (`talay-forward.service`), DNS TTL'i geçince kaldırılacak. Planlanan rol: off-site yedek + dış uptime gözcüsü |
+| Erişim | `ssh root@152.53.66.101` (SSH key ile). Lokal `~/.kube/config` **eski cluster'a ait, kullanma** |
 | Storage | `local-path` (tek disk; PVC'ler sunucu kaybına karşı dayanıklı değil) |
 
-Kubectl her zaman SSH üzerinden: `ssh root@45.87.80.10 'kubectl …'`. Komut değişkeni: `TALAY_KUBECTL="ssh root@45.87.80.10 kubectl"`.
+Kubectl her zaman SSH üzerinden: `ssh root@152.53.66.101 'kubectl …'`. Komut değişkeni: `TALAY_KUBECTL="ssh root@152.53.66.101 kubectl"`.
 
 ## 2. Repolar
 
@@ -176,7 +177,7 @@ Grafana https://grafana.cantalay.com (datasource uid: prometheus, loki, tempo)
 
 ## 10. Ağ / DNS / TLS
 
-- ExternalDNS **kapalı** → yeni host için DNS sağlayıcısında elle `A <host> 45.87.80.10`. `dig +short <host>` doğrulanmadan
+- ExternalDNS **kapalı** → yeni host için DNS sağlayıcısında elle `A <host> 152.53.66.101`. `dig +short <host>` doğrulanmadan
   deploy edilirse cert-manager HTTP-01 başarısız olur.
 - Mevcut alan adları: `cantalay.com` (platform + vitafinder), `singlestranger.com` (todogi).
 - Platform host'ları: `vault.cantalay.com`, `auth.cantalay.com`, `grafana.cantalay.com`, `argocd.cantalay.com`, `traefik.cantalay.com`.

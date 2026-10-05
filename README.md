@@ -20,7 +20,7 @@ Claude Code içinde:
 /plugin install talay-platform@talay
 ```
 
-Gerekenler: `gh` (login), `ssh root@45.87.80.10` key erişimi, `helm`, `kubectl`, `vault`, `jq`, `dig`, `python3` (+PyYAML);
+Gerekenler: `gh` (login), `ssh root@152.53.66.101` key erişimi, `helm`, `kubectl`, `vault`, `jq`, `dig`, `python3` (+PyYAML);
 Keycloak/Terraform adımları için `terraform ~> 1.16`. Kontrol: `scripts/preflight.sh`.
 
 ## Skill'ler

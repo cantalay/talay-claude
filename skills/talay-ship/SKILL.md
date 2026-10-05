@@ -50,7 +50,7 @@ Sıra önemlidir:
    `vault kv patch` komutunu kullanıcının kendisi çalıştırabilir).
 
 ## Faz 6 — DNS
-Her host için `dig +short <host>` → `45.87.80.10` değilse kullanıcıya eklemesi gereken A kayıtlarını listele ve bekle.
+Her host için `dig +short <host>` → `152.53.66.101` değilse kullanıcıya eklemesi gereken A kayıtlarını listele ve bekle.
 Doğrulanmadan Faz 7'ye geçme.
 
 ## Faz 7 — Deploy

@@ -12,7 +12,7 @@ Bootstrap dahil bütün state'ler cluster içinde (`terraform-states` ns, Kubern
 Lokal `~/.kube/config` eski cluster'a ait. Yeni kubeconfig **kullanıcı onayıyla** alınır (cluster-admin credential'ı):
 ```bash
 umask 077
-ssh root@45.87.80.10 cat /etc/rancher/k3s/k3s.yaml | sed 's#https://127.0.0.1:6443#https://45.87.80.10:6443#' > ~/.kube/talay.yaml
+ssh root@152.53.66.101 cat /etc/rancher/k3s/k3s.yaml | sed 's#https://127.0.0.1:6443#https://152.53.66.101:6443#' > ~/.kube/talay.yaml
 export KUBECONFIG=~/.kube/talay.yaml KUBE_CONFIG_PATH=~/.kube/talay.yaml
 ```
 Her repoda `backend.hcl` (`backend.hcl.example`'dan; git'e girmez) ve `terraform.tfvars` (example'dan) gerekir. Bu

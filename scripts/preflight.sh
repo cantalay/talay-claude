@@ -2,7 +2,7 @@
 # Talay ön kontrolleri: araçlar, erişimler ve repo çalışma alanı. Hiçbir şey değiştirmez.
 set -uo pipefail
 
-TALAY_HOST="${TALAY_HOST:-45.87.80.10}"
+TALAY_HOST="${TALAY_HOST:-152.53.66.101}"
 TALAY_INFRA_DIR="${TALAY_INFRA_DIR:-$HOME/Documents/infra-lts}"
 export VAULT_ADDR="${VAULT_ADDR:-https://vault.cantalay.com}"
 fail=0

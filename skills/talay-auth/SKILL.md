@@ -48,7 +48,7 @@ vault kv patch -mount=kv apps/todogi/keycloak GATEWAY_REALMS_<PROJECT>_ADMINCLIE
 Configure stack her plan/apply'da şunları ister (write-only/ephemeral; state'e girmez):
 ```bash
 cd $TALAY_INFRA_DIR/talay-identity/stacks/configure
-J=$(ssh root@45.87.80.10 "kubectl get secret -n identity keycloak-bootstrap -o jsonpath='{.data}'")   # veya Vault platform/keycloak
+J=$(ssh root@152.53.66.101 "kubectl get secret -n identity keycloak-bootstrap -o jsonpath='{.data}'")   # veya Vault platform/keycloak
 export KEYCLOAK_USER=$(printf '%s' "$J" | python3 -c "import json,sys,base64;print(base64.b64decode(json.load(sys.stdin)['KC_BOOTSTRAP_ADMIN_USERNAME']).decode())")
 export KEYCLOAK_PASSWORD=$(printf '%s' "$J" | python3 -c "import json,sys,base64;print(base64.b64decode(json.load(sys.stdin)['KC_BOOTSTRAP_ADMIN_PASSWORD']).decode())"); unset J
 export TF_VAR_vault_oidc_client_secret=unused-write-only     # sürümü değişmedikçe gönderilmez
