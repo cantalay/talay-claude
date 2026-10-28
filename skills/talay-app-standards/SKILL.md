@@ -20,7 +20,9 @@ description: Talay platformunda çalışacak uygulamayı geliştirme/uyumlama st
 2. **Health**: `/health/startup`, `/health/ready` (DB/Redis bağlantısı dahil), `/health/live` (yalnız process).
    Spring'de actuator karşılıkları kabul (`/actuator/health/{liveness,readiness}`), values'ta path'i ona göre yaz.
 3. **Metrics**: Prometheus text endpoint (`/metrics` veya `/actuator/prometheus`); HTTP istek süresi histogramı,
-   hata sayacı, iş metrikleri `<project>_` önekiyle.
+   hata sayacı, iş metrikleri `<project>_` önekiyle. Prometheus pod'u doğrudan kazır; bu yollar dışarıya açılmaz:
+   Traefik kenar koruması (talay-network `metrics-guard`) her host'ta `/metrics`, `/v1/sys/metrics` ve
+   health/info dışındaki `/(api/)?actuator/*` uçlarına 403 döner. Bu yolları ürün sayfası/rotası için kullanma.
 4. **Tracing**: kodda OTel SDK kurma — chart agent/auto-instrumentation'ı env ile açar. Java: hiçbir şey; Node:
    `@opentelemetry/auto-instrumentations-node` **production dependency** (`^0.80` veya üstü; 0.62.x HIGH CVE nedeniyle
    image taramasında düşer). Manuel span gerekiyorsa yalnız `@opentelemetry/api`.

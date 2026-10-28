@@ -172,7 +172,10 @@ Grafana https://grafana.cantalay.com (datasource uid: prometheus, loki, tempo)
 
 - Log formatı: stdout'a tek satır JSON, `trace_id`/`span_id` alanlarıyla (Loki→Tempo derived field regex `trace[_-]?id`).
 - Dashboard: env repoda ConfigMap, label `grafana_dashboard: "1"` (sidecar tüm namespace'leri tarar).
-- Alarm: `PrometheusRule` (kube-prometheus-stack), env repoda.
+- Alarm: `PrometheusRule` (kube-prometheus-stack), env repoda. İletim: Alertmanager → Telegram
+  (`kv/platform/telegram`, talay-observability `scripts/alertmanager-telegram.sh`).
+- Metrik uçları dışarıya kapalı: talay-network `metrics-guard` IngressRoute'u her host'ta `/metrics`,
+  `/v1/sys/metrics` ve health/info dışındaki `/(api/)?actuator/*` yollarına 403 döner.
 - Tempo tag'leri: `service.name`, `k8s.namespace.name`.
 
 ## 10. Ağ / DNS / TLS
