@@ -158,6 +158,9 @@ opsiyonel `REDIS_URL`, `REDIS_HOST`, `REDIS_PORT`, `REDIS_DB`, `REDIS_PASSWORD`,
 - Terraform configure çalıştırma: `KEYCLOAK_USER/PASSWORD` (`identity/keycloak-bootstrap` secret'ı veya Vault `platform/keycloak`),
   `TF_VAR_vault_oidc_client_secret` (sürüm değişmedikçe herhangi bir değer), `TF_VAR_gateway_admin_client_secrets`.
 - Gateway önünde Traefik rate limit (IP başına 60/dk, burst 30). Gateway logları parola/token/secret alanlarını maskeler.
+- Uygulamanın kendi alan adı varsa gateway o ad altında da sunulur (`auth.<uygulama-alanı>`; ör. tela için
+  `auth.telatv.net`): ayrı Certificate (`auth-gateway-<ad>-tls`) + ingress kuralında **yalnız `/auth/<realm>` yolu**.
+  Belirteç `iss`'i `auth.cantalay.com` kalır (kullanıcıya görünmez). Gateway CORS'una uygulamanın yeni origin'leri eklenir.
 - Platform realm'i `monitoring` (Argo CD/Vault/Grafana OIDC) ayrıdır; uygulamalar ona dokunmaz.
 
 ## 9. Gözlemlenebilirlik
@@ -182,7 +185,12 @@ Grafana https://grafana.cantalay.com (datasource uid: prometheus, loki, tempo)
 
 - ExternalDNS **kapalı** → yeni host için DNS sağlayıcısında elle `A <host> 152.53.66.101`. `dig +short <host>` doğrulanmadan
   deploy edilirse cert-manager HTTP-01 başarısız olur.
-- Mevcut alan adları: `cantalay.com` (platform + vitafinder), `singlestranger.com` (todogi).
+- Mevcut alan adları: `cantalay.com` (platform), `vita-pick.com` (vitafinder), `singlestranger.com` (todogi),
+  `telatv.net` (tela; DNS Squarespace'te, kayıtlar elle; `www` ve eski `tela.cantalay.com` adları nginx `map $host$uri` ile
+  301; eski API adı yüklü uygulamalar için sunulmaya devam eder).
+- Alan adı taşırken: yeni adlar **ayrı Certificate**'ta (eski ad sertifikası yenilenmeye devam eder), sıra
+  1) ad + sertifika, 2) istemci adresleri/CORS, 3) eski addan 301. Eski adda `/.well-known/` yönlendirilmez (Android App
+  Links yönlendirme izlemez).
 - Platform host'ları: `vault.cantalay.com`, `auth.cantalay.com`, `grafana.cantalay.com`, `argocd.cantalay.com`, `traefik.cantalay.com`.
 
 ## 11. Canlı envanter (2026-10-03)
@@ -204,6 +212,10 @@ Bilinen açıklar (2026-10-03):
   (Telegram/SMTP/VAPID/Instagram/proxy) bilinçli istisna olarak Vault'ta değil, admin panelden girilip DB'de AES-GCM ile
   şifreli tutulur (ana anahtar Vault `apps/vitafinder/{api,worker}` `SECRETS_ENCRYPTION_KEY`). Worker ilk tarama
   döneminde ~0,3 CPU kullanır (request 50m).
+- talay-web SPA'larında `try_files $uri $uri/ /index.html` + `public/` altında bir rota adıyla aynı klasör (ör. `public/auth/`
+  ve `/auth` rotası) → nginx `/auth`'u `http://<host>:8080/auth/` adresine yönlendirir (iç port ve http sızar; 2026-11-16 tela
+  web girişi bozuldu). Özel nginx'te `absolute_redirect off;` ve `try_files $uri /index.html;` kullan; statik klasörleri
+  `/media/`, `/brand/` gibi rota olmayan adlara koy.
 - talay-web özel nginx config'lerinde (`nginx/default.conf`) `add_header` tanımlayan her `location` sunucu seviyesindeki
   güvenlik başlıklarını miras almaz; başlıklar o location'larda tekrar edilmeli. vitafinder'da düzeltildi; talay-web chart'ının
   varsayılan config'inde de aynı sorun var (2026-10-04: todogi HTML yanıtlarında HSTS/X-Frame-Options/Permissions-Policy yok).
